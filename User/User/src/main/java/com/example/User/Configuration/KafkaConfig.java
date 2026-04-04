@@ -79,4 +79,14 @@ public class KafkaConfig {
                 .build();
 
     }
+
+    @Bean
+    public NewTopic newTopic47(){
+        return TopicBuilder
+                .name("delivery-boy-send-order-details")
+                .partitions(3)
+                .replicas(1)
+                .build();
+
+    }
 }

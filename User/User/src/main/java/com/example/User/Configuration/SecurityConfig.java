@@ -67,10 +67,13 @@ public class SecurityConfig {
                                 "/seller/getBasicProductDetails",
                                 "/seller/getOrderList",
                                 "/seller/getDetailOrderList/{orderId}",
-                                "/seller/updateOrderStatus/{orderId}/{status}",
+                                "/seller/updateOrderStatus/{orderId}/{status}/{sellerId}",
                                 "/seller/getMainSellerDashBoardPageData",
                                 "/seller/getRecentOrders",
-                                "/seller/updateStatus/{status}").hasAuthority("SELLER")
+                                "/seller/updateStatus/{status}",
+                                "/seller/getAnalytics/{id}",
+                                "/seller/getGraph/{id}/{startDate}/{endDate}",
+                                "/seller/getOrderGraph/{id}/{startDate}/{endDate}").hasAuthority("SELLER")
                         .requestMatchers("/user/signUp",
                                 "/seller/bestSeller/{longitude}/{latitude}",
                                 "/user/login",
@@ -85,7 +88,9 @@ public class SecurityConfig {
                                 "/seller/sellerMiniDetails",
                                 "/customer/getOrders/{phoneNumber}",
                                 "/customer/getOrders/seller/{phoneNumber}",
-                                "/customer/orderDetails/deliveryBoy/{orderId}").permitAll()
+                                "/customer/orderDetails/deliveryBoy/{orderId}",
+                                "/ws/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

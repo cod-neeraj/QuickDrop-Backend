@@ -13,6 +13,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -26,6 +28,19 @@ public interface SellerInfo extends JpaRepository<com.example.User.Models.Orders
 """)
     List<SellerDashBoardOrderList> findOrderListBySellerPhoneNumber(@Param("id") String id);
 
+    @Query("""
+        SELECT COALESCE(SUM(m.totalAmount), 0)
+        FROM com.example.User.Models.OrdersData.SellerInfo s
+        JOIN s.mainOrder m
+        WHERE s.sellerId = :sellerId
+        AND m.orderDate >= :start
+        AND m.orderDate < :end
+    """)
+    Double getRevenueBetweenDates(
+            @Param("sellerId") Long sellerId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 
 
     @Query("""
@@ -105,7 +120,7 @@ List<DeliveryBoyActiveDeliverySellerInfo> findByOrderId(@Param("orderId") String
 
 
     @Query("""
-            SELECT s.mainOrder.totalAmount FROM  com.example.User.Models.OrdersData.SellerInfo s 
+            SELECT s.mainOrder.totalAmount FROM  com.example.User.Models.OrdersData.SellerInfo s
             WHERE s.sellerId = :phoneNumber
             AND s.mainOrder.order_id = :orderId
             AND s.orderStatus =:sellerStatus
@@ -118,5 +133,95 @@ List<DeliveryBoyActiveDeliverySellerInfo> findByOrderId(@Param("orderId") String
                                         @Param("deliveryBoyStatus") DeliveryBoyStatus deliveryBoyStatus);
 
 
+
+    @Query("""
+    SELECT
+        COALESCE(SUM(CASE
+            WHEN o.orderDate >= :startThisMonth AND o.orderDate < :startNextMonth
+            THEN o.totalAmount ELSE 0 END), 0),
+
+        COALESCE(SUM(CASE
+            WHEN o.orderDate >= :startLastMonth AND o.orderDate < :startThisMonth
+            THEN o.totalAmount ELSE 0 END), 0),
+
+        COUNT(CASE
+            WHEN o.orderDate >= :startThisMonth AND o.orderDate < :startNextMonth
+            THEN o.id ELSE NULL END),
+
+        COUNT(CASE
+            WHEN o.orderDate >= :startLastMonth AND o.orderDate < :startThisMonth
+            THEN o.id ELSE NULL END)
+
+    FROM com.example.User.Models.OrdersData.SellerInfo s
+    JOIN s.mainOrder o
+    WHERE s.sellerId = :sellerId
+""")
+    Object[] getMonthlyStats(
+            String sellerId,
+            LocalDate startThisMonth,
+            LocalDate startNextMonth,
+            LocalDate startLastMonth
+    );
+
+    @Query("""
+SELECT
+    DATE(o.orderDate),
+    SUM(o.totalAmount)
+FROM com.example.User.Models.OrdersData.SellerInfo s
+JOIN s.mainOrder o
+WHERE s.sellerId = :sellerId
+AND o.orderDate >= :startDate
+AND o.orderDate <= :endDate
+GROUP BY DATE(o.orderDate)
+""")
+    List<Object[]> getDailySales(String sellerId, LocalDate startDate, LocalDate endDate);
+
+    @Query("""
+SELECT
+    FUNCTION('MONTH', o.orderDate),
+    FUNCTION('YEAR', o.orderDate),
+    SUM(o.totalAmount)
+FROM com.example.User.Models.OrdersData.SellerInfo s
+JOIN s.mainOrder o
+WHERE s.sellerId = :sellerId
+AND o.orderDate BETWEEN :startDate AND :endDate
+GROUP BY FUNCTION('YEAR', o.orderDate), FUNCTION('MONTH', o.orderDate)
+ORDER BY FUNCTION('YEAR', o.orderDate), FUNCTION('MONTH', o.orderDate)
+""")
+    List<Object[]> getMonthlyGraphSales(String sellerId, LocalDate startDate, LocalDate endDate);
+
+    @Query("""
+SELECT
+    DATE(o.orderDate),
+    COUNT(o.id)
+FROM com.example.User.Models.OrdersData.SellerInfo s
+JOIN s.mainOrder o
+WHERE s.sellerId = :sellerId
+AND o.orderDate >= :startDate
+AND o.orderDate <= :endDate
+GROUP BY DATE(o.orderDate)
+""")
+    List<Object[]> getOrderDaily(String sellerId, LocalDate startDate, LocalDate endDate);
+
+    @Query("""
+SELECT
+    FUNCTION('MONTH', o.orderDate),
+    FUNCTION('YEAR', o.orderDate),
+    COUNT(o.id)
+FROM com.example.User.Models.OrdersData.SellerInfo s
+JOIN s.mainOrder o
+WHERE s.sellerId = :sellerId
+AND o.orderDate BETWEEN :startDate AND :endDate
+GROUP BY FUNCTION('YEAR', o.orderDate), FUNCTION('MONTH', o.orderDate)
+ORDER BY FUNCTION('YEAR', o.orderDate), FUNCTION('MONTH', o.orderDate)
+""")
+    List<Object[]> getOrderMonthlyGraph(String sellerId, LocalDate startDate, LocalDate endDate);
+
+
+
+
+
 }
+
+
 

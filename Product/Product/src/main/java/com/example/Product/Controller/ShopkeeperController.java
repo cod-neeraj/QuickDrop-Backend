@@ -1,5 +1,6 @@
 package com.example.Product.Controller;
 
+import com.example.Product.DTO.LowStockDTO;
 import com.example.Product.DTO.ProductCard;
 import com.example.Product.Service.ProductService;
 import com.example.Product.Service.ShopKeeperService;
@@ -22,16 +23,6 @@ public class ShopkeeperController {
 
     @Autowired
     ProductService productService;
-//    @GetMapping("/low-stock-products")
-//    public List<ProductCard> getLowStockProducts(Long shopkeeperId){
-//        List<ProductCard> list = shopKeeperService.getLowStockList(shopkeeperId);
-//        if(list.isEmpty()){
-//            return null;
-//
-//        }
-//        return list;
-//
-//    }
     @GetMapping("/sellerProductCount/{phoneNumber}")
     public ResponseEntity<Long> getProductCount(@PathVariable String phoneNumber){
         Long count = productService.getProductCount(phoneNumber);
@@ -40,6 +31,12 @@ public class ShopkeeperController {
         }else{
             return ResponseEntity.ok(count);
         }
+
+    }
+    @GetMapping("/lowStockProducts/{phoneNumber}")
+    public ResponseEntity<?> lowStockProducts(@PathVariable String phoneNumber){
+        List<LowStockDTO> lowStockDTOS = shopKeeperService.getLowStockList(phoneNumber);
+        return ResponseEntity.ok(lowStockDTOS);
 
     }
 }

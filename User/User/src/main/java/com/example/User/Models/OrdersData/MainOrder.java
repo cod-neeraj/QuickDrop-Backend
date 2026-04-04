@@ -34,6 +34,7 @@ public class MainOrder {
     private LocalDate orderDate;
     private Double totalAmount;
     private String deliveryBoyId;
+    private String deliveryBoyPhoneNumber;
     private String deliveryBoyName;
 
     @OneToMany(mappedBy = "mainOrder", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)

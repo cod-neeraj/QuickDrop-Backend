@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 public class DeliveryBoyOrderStatusChange {
     private String phoneNumber;
-    private String sellerPhoneNumber;
+    private String sellerId;
     private DeliveryBoyStatus status;
     private String orderId;
 }

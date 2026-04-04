@@ -25,8 +25,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -38,6 +41,7 @@ public class OrderService {
 
     @Autowired
     deliveryAllocationInterface deliveryAllocationInterface1;
+
 
 
 
@@ -62,7 +66,6 @@ public class OrderService {
     @KafkaListener(topics = "order-success", groupId = "order-consume")
     public void settleOrders(String values) throws JsonProcessingException {
 
-        System.out.println("checkpoint 1 ✅✅");
             String[] parts = values.split(",");
             String paymentId = parts[0];
             String orderId = parts[1];
@@ -97,7 +100,6 @@ public class OrderService {
                 mainOrderRepo.save(mainOrder);
 
             }
-        System.out.println("checkpoint 2 ✅✅");
         System.out.println(mainOrder.getUserAddress());
 
         if(mainOrder.getUserAddress().equalsIgnoreCase("ownPickUp")){
@@ -123,10 +125,8 @@ public class OrderService {
                     .build();
             list.add(sellerInfo.getSellerId());
             System.out.println(sellerInfo.getSellerId());
-//            WebSocketHandler.sendToseller(sellerInfo.getSellerId(), sellerDeliveryDetails1.toString());
-
-
             sellerDeliveryDetails.add(sellerDeliveryDetails1);
+            // call function
         }
 
         System.out.println("checkpoint 3 ✅✅");
@@ -148,17 +148,67 @@ public class OrderService {
     }
 
 
+    @Transactional
+    public void addStatsToSeller(MainOrder mainOrder) {
+
+        LocalDate date = LocalDate.now();
+
+        List<SellerInfo> sellers = mainOrder.getSellerInfo();
+
+        Map<String, Double> map = new HashMap<>();
+
+        for (SellerInfo seller : sellers) {
+
+            double totalAmount = 0.0;
+
+            for (ProductDetailsInfo product : seller.getProductDetailsInfo()) {
+                totalAmount += product.getPrice() * product.getQuantity();
+            }
+
+            map.put(seller.getSellerId(), totalAmount);
+        }
+
+        for (Map.Entry<String, Double> entry : map.entrySet()) {
+
+            String sellerId = entry.getKey();
+            Double amount = entry.getValue();
+
+            boolean exists = sellerDailyRevenueRepo
+                    .existsByDateAndSellerId(date, sellerId);
+
+            if (exists) {
+
+                sellerDailyRevenueRepo.updateRevenue(
+                        date,
+                        sellerId,
+                        BigDecimal.valueOf(amount)
+                );
+
+            } else {
+
+                Seller_Info sellerInfo = sellerRepo.findBySellerId(sellerId).orElseThrow(() -> new RuntimeException("Seller not found"));
+                Seller_daily_revenue revenue = Seller_daily_revenue.builder()
+                        .date(date)
+                        .orderCount(1)
+                        .revenue(amount)
+                        .averageOrderValue(amount)
+                        .build();
+                sellerInfo.getSellerDailyRevenues().add(revenue);
+                sellerRepo.save(sellerInfo);
+            }
+        }
+    }
     @KafkaListener(topics = "deliveryBoy-updateOrderStatus",groupId = "order-consume")
     public void deliveryBouOrderStatusChange(String values) throws JsonProcessingException {
         objectMapper = new ObjectMapper();
+        System.out.println("📈📈");
         DeliveryBoyOrderStatusChange deliveryBoyOrderStatusChange = objectMapper.readValue(values,DeliveryBoyOrderStatusChange.class);
-        // update status okk
 
         int update = sellerInfoRepo.updateDeliveryBoyStatus(deliveryBoyOrderStatusChange.getOrderId(),
-                                                            deliveryBoyOrderStatusChange.getSellerPhoneNumber(),
+                                                            deliveryBoyOrderStatusChange.getSellerId(),
                                                             deliveryBoyOrderStatusChange.getStatus());
         if(deliveryBoyOrderStatusChange.getStatus() == DeliveryBoyStatus.PICKED){
-            mainOrderToDailyRevenue(deliveryBoyOrderStatusChange.getSellerPhoneNumber(), deliveryBoyOrderStatusChange.getOrderId());
+            mainOrderToDailyRevenue(deliveryBoyOrderStatusChange.getSellerId(), deliveryBoyOrderStatusChange.getOrderId());
         }
         return;
 
@@ -166,7 +216,12 @@ public class OrderService {
 
     }
 
-    // function from MainOrder to DailyRevenue
+    @KafkaListener(topics = "deliveryBoy-delivered-order",groupId = "order-consume")
+    public void deliveryChangingOrderStatus(String orderId){
+        mainOrderRepo.updateOrderStatus(orderId, OrderStatus.DELIVERED);
+        return;
+
+    }
 
     public void mainOrderToDailyRevenue(String phoneNumber,String orderId){
         Double amount = sellerInfoRepo.fetchAmountWhichOrderAreDone(phoneNumber,orderId,SellerStatus.SHIPPED,DeliveryBoyStatus.PICKED);
@@ -194,8 +249,10 @@ public class OrderService {
                 .totalAmount(mainOrder.getTotalAmount())
                 .username(mainOrder.getUsername())
                 .build();
+        addStatsToSeller(mainOrder);
         for(int i=0;i<mainOrder.getSellerInfo().size();i++) {
             System.out.println("👍👍");
+
             WebSocketHandler.sendToseller(mainOrder.getSellerInfo().get(i).getSellerId(), sellerDashBoardOrderList);
         }
 
@@ -205,8 +262,55 @@ public class OrderService {
        }
 
         mainOrderRepo.save(mainOrder);
+       OrdersDetailsForDeliveryBoy ordersDetailsForDeliveryBoy = OrdersDetailsForDeliveryBoy.builder()
+               .orderId(mainOrder.getOrder_id())
+               .customerName(mainOrder.getUsername())
+               .deliveryLocation(mainOrder.getUserAddress())
+               .orderStatus(mainOrder.getOrderStatus().toString())
+               .orderEarnings((double)mainOrder.getTotalAmount()%10)
+               .deliveredAt(null)
+               .deliveryBoyId(mainOrder.getDeliveryBoyId())
+               .deliveryBoyReview("")
+               .userReview("")
+               .build();
+
+       String value1 = objectMapper.writeValueAsString(ordersDetailsForDeliveryBoy);
+       kafkaTemplate.send("delivery-boy-send-order-details",value1);
 
     }
+
+
+//    @KafkaListener(topics = "addOrdersInDeliveryBoy", groupId = "order-consume")
+//    public void sendOrderDataToDeliveryBoy(String string){
+//        String orderId;
+//        String deliveryBoyId;
+//
+//        MainOrderReepo//find by delivery boy Id and ordrId
+//
+//        OrdersDetailsForDeliveryBoy ordersDetailsForDeliveryBoy = OrdersDetailsForDeliveryBoy.builder()
+//                .orderId
+//                .build();
+//
+//        private String orderId;
+//
+//        private String customerName;
+//
+//        private String deliveryLocation;
+//
+//        private String userReview;
+//
+//        private String deliveryBoyReview;
+//
+//        private Double orderEarnings;
+//
+//        private String orderStatus;
+//
+//        private LocalDateTime deliveredAt;
+//
+//
+//
+//
+//    }
 
 
     public DeliveryBoyActiveDelivery findDetails(String orderId){

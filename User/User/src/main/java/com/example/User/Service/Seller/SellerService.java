@@ -314,32 +314,57 @@ public class SellerService {
         } else{
             status1 = SellerStatus.SHIPPED;
         }
-        int count = sellerInfoRepo.updateStatus(orderId,"2d335fa0-12e2-4b2f-a510-636964b647b9",status1);
+        int count = sellerInfoRepo.updateStatus(orderId,phoneNumber,status1);
         return count==1;
     }
 
 
     public record MonthlyRevenue(double thisMonth, double lastMonth) {}
 
-    public MonthlyRevenue getMonthlyRevenue(Long seller_id) {
+    public MonthlyRevenue getMonthlyRevenue(Long sellerId) {
+
         LocalDate now = LocalDate.now();
-        int month = now.getMonthValue();
-        int year = now.getYear();
-        if(month == 1){
-            month=12;
-            year-=1;
-        }else{
-            month = month-1;
+        LocalDate startOfCurrentMonth = now.withDayOfMonth(1);
+        double  thisMonthRevenue = 0.0;
+        double lastMonthRevenue = 0.0;
+
+        try {
+            thisMonthRevenue =
+                    sellerInfoRepo.getRevenueBetweenDates(
+                            sellerId,
+                            startOfCurrentMonth.atStartOfDay(),
+                            now.plusDays(1).atStartOfDay()
+                    );
+        } catch (Exception e) {
+             thisMonthRevenue = 0.0;
+        }
+        LocalDate lastMonthDate = now.minusMonths(1);
+        int lastMonth = lastMonthDate.getMonthValue();
+        int lastYear = lastMonthDate.getYear();
+
+        try {
+             lastMonthRevenue =
+                    sellerMonthlyRevenueRepo.getRevenueForMonth(sellerId, lastYear, lastMonth);
+
+//            if (lastMonthRevenue == null) {
+//                LocalDate start = lastMonthDate.withDayOfMonth(1);
+//                LocalDate end = start.plusMonths(1);
+//
+//                lastMonthRevenue =
+//                        sellerInfoRepo.getRevenueBetweenDates(
+//                                sellerId,
+//                                start.atStartOfDay(),
+//                                end.atStartOfDay()
+//                        );
+//            }
+
+        } catch (Exception e) {
+            lastMonthRevenue = 0.0;
         }
 
-        System.out.println(now);
-        System.out.println(month);
-        System.out.println(year);
-        double thisMonth=sellerDailyRevenueRepo.getThisMonthRevenue(seller_id,now);
-        double lastMonth = sellerMonthlyRevenueRepo.getRevenueForMonth(seller_id,year,month);
-        return new MonthlyRevenue(thisMonth, lastMonth);
-    }
 
+        return new MonthlyRevenue(thisMonthRevenue, lastMonthRevenue);
+    }
     public MainDashboardData getDashboardData(String phoneNumber){
         Object[] seller = sellerRepo.findNameByPhoneNumber(phoneNumber);
         Object[] sellerAndId = (Object[]) seller[0];

@@ -1,5 +1,6 @@
 package com.example.Product.Repository;
 
+import com.example.Product.DTO.LowStockDTO;
 import com.example.Product.DTO.RecommendedProductCard;
 import com.example.Product.Model.ProductData.Product;
 import com.example.Product.Model.ProductSearchAbleObject;
@@ -20,66 +21,66 @@ import java.util.Optional;
 public interface ProductRepo extends JpaRepository<Product,String> {
 
     @Query(value = """
-    SELECT
-        (p.attributes ->> 'id') AS id,
-        (p.attributes ->> 'name') AS name,
-        (p.attributes ->> 'type') AS type,
-        (p.attributes ->> 'brand') AS brand,
-        (p.attributes ->> 'category') AS category,
-        (p.attributes ->> 'rating')::float AS rating,
-        (p.attributes ->> 'quantity')::int AS quantity,
-        (p.attributes ->> 'image') AS imageUrl,
-        ROUND((ts_rank_cd(p.tsvector_column, to_tsquery(:tsQuery)) * 100)::numeric, 2)::float AS match_percentage
-    FROM product.product_search_view p
-    LEFT JOIN product.product_stats ps ON ps.product_id = p.product_id
-    WHERE
-        (
-            :tsQuery = ''
-            OR p.tsvector_column @@ to_tsquery(:tsQuery)
-        )
-        AND (
-            :maxDistance IS NULL
-            OR ST_DWithin(
-                p.location,
-                ST_MakePoint(:userLng, :userLat)::geography,
-                :maxDistance * 1000
-            )
-        )
-        AND (
-            (:minPrice IS NULL OR p.price::float >= :minPrice)
-        )
-        AND (
-            (:maxPrice IS NULL OR  p.price::float <= :maxPrice)
-        )
-    ORDER BY
-        ps.score DESC NULLS LAST,
-        match_percentage DESC,
-        p.product_id
-    """,
+            SELECT
+                (p.attributes ->> 'id') AS id,
+                (p.attributes ->> 'name') AS name,
+                (p.attributes ->> 'type') AS type,
+                (p.attributes ->> 'brand') AS brand,
+                (p.attributes ->> 'category') AS category,
+                (p.attributes ->> 'rating')::float AS rating,
+                (p.attributes ->> 'quantity')::int AS quantity,
+                (p.attributes ->> 'image') AS imageUrl,
+                ROUND((ts_rank_cd(p.tsvector_column, to_tsquery(:tsQuery)) * 100)::numeric, 2)::float AS match_percentage
+            FROM product.product_search_view p
+            LEFT JOIN product.product_stats ps ON ps.product_id = p.product_id
+            WHERE
+                (
+                    :tsQuery = ''
+                    OR p.tsvector_column @@ to_tsquery(:tsQuery)
+                )
+                AND (
+                    :maxDistance IS NULL
+                    OR ST_DWithin(
+                        p.location,
+                        ST_MakePoint(:userLng, :userLat)::geography,
+                        :maxDistance * 1000
+                    )
+                )
+                AND (
+                    (:minPrice IS NULL OR p.price::float >= :minPrice)
+                )
+                AND (
+                    (:maxPrice IS NULL OR  p.price::float <= :maxPrice)
+                )
+            ORDER BY
+                ps.score DESC NULLS LAST,
+                match_percentage DESC,
+                p.product_id
+            """,
             countQuery = """
-    SELECT COUNT(*)
-    FROM product.product_search_view p
-    LEFT JOIN product.product_stats ps ON ps.product_id = p.product_id
-    WHERE
-        (
-            :tsQuery = ''
-            OR p.tsvector_column @@ to_tsquery(:tsQuery)
-        )
-        AND (
-            :maxDistance IS NULL
-            OR ST_DWithin(
-                p.location,
-                ST_MakePoint(:userLng, :userLat)::geography,
-                :maxDistance * 1000
-            )
-        )
-        AND (
-            (:minPrice IS NULL OR  p.price::float >= :minPrice)
-        )
-        AND (
-            (:maxPrice IS NULL OR p.price::float <= :maxPrice)
-        )
-    """,
+                    SELECT COUNT(*)
+                    FROM product.product_search_view p
+                    LEFT JOIN product.product_stats ps ON ps.product_id = p.product_id
+                    WHERE
+                        (
+                            :tsQuery = ''
+                            OR p.tsvector_column @@ to_tsquery(:tsQuery)
+                        )
+                        AND (
+                            :maxDistance IS NULL
+                            OR ST_DWithin(
+                                p.location,
+                                ST_MakePoint(:userLng, :userLat)::geography,
+                                :maxDistance * 1000
+                            )
+                        )
+                        AND (
+                            (:minPrice IS NULL OR  p.price::float >= :minPrice)
+                        )
+                        AND (
+                            (:maxPrice IS NULL OR p.price::float <= :maxPrice)
+                        )
+                    """,
             nativeQuery = true
     )
     Page<ProductSearchAbleObject> searchProducts(
@@ -93,21 +94,22 @@ public interface ProductRepo extends JpaRepository<Product,String> {
     );
 
 
-@Query("SELECT p.name FROM Product p WHERE p.shopkeeperId=:id AND p.name=:name")
-    Optional<String> checkDuplicate(@Param("id") String id,@Param("name") String name);
+    @Query("SELECT p.name FROM Product p WHERE p.shopkeeperId=:id AND p.name=:name")
+    Optional<String> checkDuplicate(@Param("id") String id, @Param("name") String name);
 
-@Query(" SELECT p FROM Product p  WHERE p.id=:id")
-Product findProduct(@Param("id") String id);
+    @Query(" SELECT p FROM Product p  WHERE p.id=:id")
+    Product findProduct(@Param("id") String id);
 
     @Modifying
     @Transactional
     @Query(""" 
-    UPDATE Product p
-    SET p.quantity = p.quantity - 1
-    WHERE p.productId = :productId
-      AND p.quantity >= :requestedQty
-""")
-    int subtractIfAvailable(@Param("productId") String productId,@Param("requestedQty") Integer quantity);
+                UPDATE Product p
+                SET p.quantity = p.quantity - 1
+                WHERE p.productId = :productId
+                  AND p.quantity >= :requestedQty
+            """)
+    int subtractIfAvailable(@Param("productId") String productId, @Param("requestedQty") Integer quantity);
+
     @Modifying
     @Transactional
     @Query("""
@@ -116,7 +118,6 @@ Product findProduct(@Param("id") String id);
             WHERE p.productId = :productId
             """)
     int addProductAgain(@Param("productId") String productId);
-
 
 
     @Query("SELECT new com.example.Product.DTO.RecommendedProductCard(p.productId,p.name,p.type,p.brand,p.defaultImageUrl) FROM Product p JOIN p.productStats ps WHERE p.geohash IN :geohashes ORDER BY ps.score DESC")
@@ -143,13 +144,27 @@ Product findProduct(@Param("id") String id);
                                                         Pageable pageable);
 
     @Query("""
-        SELECT COUNT(p)
-        FROM Product p
-        WHERE p.phoneNumber = :phoneNumber
-       """)
+             SELECT COUNT(p)
+             FROM Product p
+             WHERE p.phoneNumber = :phoneNumber
+            """)
     Long findProductCount(@Param("phoneNumber") String phoneNumber);
 
+
+    @Query("""
+             SELECT new com.example.Product.DTO.LowStockDTO(p.productId,p.defaultImageUrl,p.name,p.brand,pv.quantity)
+             FROM Product p
+             LEFT JOIN p.productVariants pv
+             WHERE p.phoneNumber = :phoneNumber AND pv.quantity<15
+            """)
+    List<LowStockDTO> findLowStockProduct(@Param("phoneNumber") String phoneNumber);
 }
+
+
+
+
+
+
 
 /*
 

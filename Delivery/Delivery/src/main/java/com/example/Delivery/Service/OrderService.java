@@ -2,15 +2,13 @@ package com.example.Delivery.Service;
 
 import ch.hsr.geohash.GeoHash;
 import com.example.Delivery.Config.WebSocketHandler;
-import com.example.Delivery.DTO.DeliveryBoyOrderDetails;
-import com.example.Delivery.DTO.SellerDeliveryDetails;
-import com.example.Delivery.DTO.SellerLocationRepo;
+import com.example.Delivery.DTO.*;
 import com.example.Delivery.DataToShow.MiniOrderDetails;
 import com.example.Delivery.DeliveryApplication;
-import com.example.Delivery.Models.ActiveDelivery;
-import com.example.Delivery.Models.DeliveryBoyStatus;
-import com.example.Delivery.Models.SellerStatus;
+import com.example.Delivery.Models.*;
 import com.example.Delivery.Repository.ActiveDeliveryRepo;
+import com.example.Delivery.Repository.OrdersRepo;
+import com.example.Delivery.Repository.UserRepo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
@@ -24,6 +22,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +31,12 @@ public class OrderService {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private UserRepo userRepo;
+
+    @Autowired
+    private OrdersRepo ordersRepo;
 
 
     @Autowired
@@ -269,7 +274,7 @@ public class OrderService {
     }
 
     @Transactional
-    public void acceptOrder(String orderId, String deliveryBoyId) throws JsonProcessingException {
+    public void acceptOrder(String orderId, String deliveryBoyId) throws JsonProcessingException  {
 
 
         String status = (String) redisTemplate.opsForValue()
@@ -286,7 +291,7 @@ public class OrderService {
 
         MiniOrderDetails miniOrderDetails = MiniOrderDetails.builder()
                 .orderStatus("ASSIGNED")
-                .orderEarnings(35.0)
+                .orderEarnings((double) 25.0)
                 .orderId(orderId)
                 .droplocation("hh")
                 .build();
@@ -295,9 +300,13 @@ public class OrderService {
                 WebSocketHandler.sendToDeliveryBoy(otherId, value);
 
         }
+        redisTemplate.delete("order:eligible:" + orderId);
+
+//       kafkaTemplate.send("addOrdersInDeliveryBoy",deliveryBoyId+","+orderId);
+        DeliveryBoyBasicDetails deliveryBoyBasicDetails = userRepo.findDetails(deliveryBoyId);
 
         DeliveryBoyDetails deliveryBoyDetails = DeliveryBoyDetails.builder()
-                .deliveryBoyName("raju")
+                .deliveryBoyName(deliveryBoyBasicDetails.getName())
                 .orderId(orderId)
                 .phoneNumber(deliveryBoyId)
                 .build();
@@ -307,16 +316,37 @@ public class OrderService {
 
     }
 
+    @KafkaListener(topics = "delivery-boy-send-order-details",groupId = "order-consume")
+    public void addOrderToThisService(String value) throws JsonProcessingException {
+
+        OrdersDetailsForDeliveryBoy orders = objectMapper.readValue(value,OrdersDetailsForDeliveryBoy.class);
+        User user = userRepo.findById(orders.getDeliveryBoyId()).orElseThrow(()->new RuntimeException("maa chuda"));
+        Set<Orders> userOrders = user.getOrders();
+        Orders order = Orders.builder()
+                .orderId(orders.getOrderId())
+                .customerName(orders.getCustomerName())
+                .deliveryLocation(orders.getDeliveryLocation())
+                .deliveryBoyReview(orders.getDeliveryBoyReview())
+                .userReview(orders.getUserReview())
+                .orderStatus(orders.getOrderStatus())
+                .orderEarnings(orders.getOrderEarnings())
+                .deliveredAt(orders.getDeliveredAt())
+                .build();
+        userOrders.add(order);
+        userRepo.save(user);
+
+    }
+
     public void updateOrderStatus(String phoneNumber,
                                   String status,
                                   String orderId,
-                                  String sellerPhoneNumber) throws JsonProcessingException {
+                                  String sellerId) throws JsonProcessingException {
 
         objectMapper = new ObjectMapper();
         DeliveryBoyOrderStatusChange deliveryBoyOrderStatusChange = DeliveryBoyOrderStatusChange.builder()
                 .orderId(orderId)
                 .phoneNumber(phoneNumber)
-                .sellerPhoneNumber(sellerPhoneNumber)
+                .sellerId(sellerId)
                 .build();
         if(status.equalsIgnoreCase("NOTPICKED")){
             deliveryBoyOrderStatusChange.setStatus(DeliveryBoyStatus.NOTpICKED);
@@ -331,6 +361,11 @@ public class OrderService {
             kafkaTemplate.send("deliveryBoy-updateOrderStatus",s);
         }
         return ;
+
+    }
+
+    public void setDeliveredTheOrder(String phoneNumber,String orderId){
+        kafkaTemplate.send("deliveryBoy-delivered-order",orderId);
 
     }
 

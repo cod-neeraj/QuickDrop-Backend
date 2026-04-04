@@ -44,15 +44,14 @@ public class DashBoardService {
         LocalDateTime startOfWeek =
                 LocalDate.now().with(DayOfWeek.MONDAY).atStartOfDay();
         String id = null;
-
-        String name     = null;
+        String name = null;
         Object[] basicDetails = userRepo.findBasicDetails(deliveryBoyId);
 
         if (basicDetails != null && basicDetails.length > 0) {
 
             Object[] stats = (Object[]) basicDetails[0];
-            id = stats[0] !=null ? stats[0].toString() : null;
-            name = stats[1] !=null ? stats[1].toString() : null;
+            name = stats[0] !=null ? stats[0].toString() : null;
+            id = stats[1] !=null ? stats[1].toString() : null;
         }
 
         Object[] todayStats = ordersRepo.getTodayStats(

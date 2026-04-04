@@ -131,16 +131,23 @@ public class UserController {
     }
 
 
-    @PostMapping("/updateOrderStatus/{status}/{orderId}/{sellerPhoneNumber}")
+    @PostMapping("/updateOrderStatus/{status}/{orderId}/{sellerId}")
     public ResponseEntity<?> updateOrderStatus(@AuthenticationPrincipal UserDetails userDetails,
                                                @PathVariable String status,
                                                @PathVariable String orderId,
-                                               @PathVariable String sellerPhoneNumber
+                                               @PathVariable String sellerId
                                                ) throws JsonProcessingException {
         String phoneNumber = userDetails.getUsername();
-        orderService.updateOrderStatus(phoneNumber,status,orderId,sellerPhoneNumber);
+        orderService.updateOrderStatus(phoneNumber,status,orderId,sellerId);
         return ResponseEntity.ok(true);
 
+    }
+
+    @PostMapping("markDelivered/{orderId}")
+    public ResponseEntity<?> deliverTheOrder(@AuthenticationPrincipal UserDetails userDetails,@PathVariable String orderId){
+        String phoneNumber = userDetails.getUsername();
+        orderService.setDeliveredTheOrder(phoneNumber,orderId);
+        return ResponseEntity.ok("succesfully");
     }
 //    @GetMapping("/deliveryBoy/{longitude}/{latitude}")
 //    public ResponseEntity<List<String>> findBestDeliveryBoy(@PathVariable Double longitude, @PathVariable Double latitude){

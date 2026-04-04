@@ -12,5 +12,5 @@ public class DeliveryBoyOrderStatusChange {
     private String phoneNumber;
     private DeliveryBoyStatus status;
     private String orderId;
-    private String sellerPhoneNumber;
+    private String sellerId;
 }

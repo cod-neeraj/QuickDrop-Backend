@@ -44,4 +44,22 @@ public class KafkaConfig {
                 .replicas(1)
                 .build();
     }
+
+    @Bean
+    public NewTopic updateOrderByDeliveryBoy(){
+        return TopicBuilder
+                .name("deliveryBoy-delivered-order")
+                .partitions(4)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic addOrderInDeliveryBoy(){
+        return TopicBuilder
+                .name("addOrdersInDeliveryBoy")
+                .partitions(4)
+                .replicas(1)
+                .build();
+    }
 }

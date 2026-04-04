@@ -1,5 +1,6 @@
 package com.example.Delivery.Repository;
 
+import com.example.Delivery.DTO.DeliveryBoyBasicDetails;
 import com.example.Delivery.Models.User;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -30,6 +31,10 @@ public interface UserRepo extends JpaRepository<User,String> {
 
     @Query("SELECT u.name,u.user_id FROM User u WHERE u.phoneNumber = :phone")
     Object[] findBasicDetails(@Param("phone") String phoneNumber);
+
+
+    @Query("SELECT new com.example.Delivery.DTO.DeliveryBoyBasicDetails(u.name,u.phoneNumber) FROM User u WHERE u.phoneNumber=:id")
+    DeliveryBoyBasicDetails findDetails(@Param("id") String id);
 
 
 }

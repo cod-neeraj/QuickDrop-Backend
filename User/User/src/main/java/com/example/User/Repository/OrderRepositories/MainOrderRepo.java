@@ -2,9 +2,12 @@ package com.example.User.Repository.OrderRepositories;
 
 import com.example.User.DTO.ShowOrdersInDashBoard;
 import com.example.User.Models.OrdersData.MainOrder;
+import com.example.User.Models.Seller.OrderStatus;
 import com.example.User.Service.Order.DeliveryBoyActiveDeliveryRepoData;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -69,6 +72,15 @@ public interface MainOrderRepo extends JpaRepository<MainOrder,String> {
             """)
     DeliveryBoyActiveDeliveryRepoData findByOrderIdDeliveryBoy(@Param("orderId") String orderId);
 
+    @Transactional
+    @Modifying
+    @Query("""
+  UPDATE MainOrder m
+  SET m.orderStatus = :status
+  WHERE m.order_id = :orderId
+""")
+    int updateOrderStatus(@Param("orderId") String orderId,
+                                @Param("status") OrderStatus status);
 
 
 

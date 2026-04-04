@@ -1,6 +1,7 @@
 package com.example.User.Controllers;
 
 import com.example.User.DTO.DiscountDTO;
+import com.example.User.DTO.SellerAnalytics;
 import com.example.User.DTO.SellerDashBoardOrderList;
 import com.example.User.DataToShow.ProductCreateDto.ProductDTO;
 import com.example.User.DataToShow.SellerDashBoard.BasicProductDetails;
@@ -14,6 +15,7 @@ import com.example.User.Response.ApiResponse;
 import com.example.User.Service.BestSellerInfo;
 import com.example.User.Service.KafkaService;
 import com.example.User.Service.RecommendationService;
+import com.example.User.Service.Seller.SellerAnalyticsService;
 import com.example.User.Service.Seller.SellerProductList;
 import com.example.User.Service.Seller.SellerService;
 import com.example.User.Service.Seller.Top5orderDetails;
@@ -40,12 +42,14 @@ import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @RestController
 @RequestMapping("/seller")
+@CrossOrigin
 public class SellerController {
 
     @Autowired
@@ -56,6 +60,9 @@ public class SellerController {
 
     @Autowired
     private RecommendationService recommendationService;
+
+    @Autowired
+    private SellerAnalyticsService sellerAnalytics;
 
     @PostMapping("/personal-Info")    //working
     public ResponseEntity<ApiResponse<Boolean>> updatePersonalInfo(@RequestBody SellerPersonalInfo sellerPersonalInfo) {
@@ -84,14 +91,10 @@ public class SellerController {
     }
 
     @GetMapping("/get-personal-Info")    //working
-    public ResponseEntity<ApiResponse<SellerPersonalInfo>> getPersonalInfo() {
-        Authentication authentication = (Authentication) SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() &&
-                authentication.getPrincipal() instanceof UserDetails) {
-
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+    public ResponseEntity<ApiResponse<SellerPersonalInfo>> getPersonalInfo(@AuthenticationPrincipal UserDetails userDetails) {
             String phoneNumber = userDetails.getUsername();
             SellerPersonalInfo sellerPersonalInfo = sellerService.getSellerInfo(phoneNumber);
+            if(sellerPersonalInfo!=null){
             ApiResponse<SellerPersonalInfo> response = ApiResponse.<SellerPersonalInfo>builder()
                     .success(true)
                     .message("updated successfully")
@@ -178,8 +181,6 @@ public class SellerController {
     }
 
 
-    // Frontpage dashBoard detaisl okk
-
     @GetMapping("/getMainSellerDashBoardPageData")
     public ResponseEntity<?> getMainSellerDashBoardData(@AuthenticationPrincipal UserDetails userDetails){
         String phoneNumber = userDetails.getUsername();
@@ -195,6 +196,35 @@ List<Top5orderDetails> list = sellerService.getTop5orders(phoneNumber);
         return ResponseEntity.ok(list);
 
     }
+
+    @GetMapping("/getAnalytics/{id}")
+    public ResponseEntity<?> getAnalytics(@AuthenticationPrincipal UserDetails userDetails,@PathVariable String id){
+        String phoneNumber = userDetails.getUsername();
+        SellerAnalytics sellerAnalytics1 = sellerAnalytics.getAnalytics(id);
+        return ResponseEntity.ok(sellerAnalytics1);
+
+    }
+
+    @GetMapping("/getGraph/{id}/{startDate}/{endDate}")
+    public ResponseEntity<?> getGraphData(@AuthenticationPrincipal UserDetails userDetails,
+                                          @PathVariable  String id,
+                                          @PathVariable LocalDate startDate,
+                                          @PathVariable LocalDate endDate){
+        List<Map<String, Object>> list = sellerAnalytics.getGraphData(id,startDate,endDate);
+        return ResponseEntity.ok(list);
+
+    }
+
+    @GetMapping("/getOrderGraph/{id}/{startDate}/{endDate}")
+    public ResponseEntity<?> getOrderGraphData(@AuthenticationPrincipal UserDetails userDetails,
+                                          @PathVariable  String id,
+                                          @PathVariable LocalDate startDate,
+                                          @PathVariable LocalDate endDate){
+        List<Map<String, Object>> list = sellerAnalytics.getOrdersGraphData(id,startDate,endDate);
+        return ResponseEntity.ok(list);
+
+    }
+
 
 
 
@@ -366,11 +396,12 @@ List<Top5orderDetails> list = sellerService.getTop5orders(phoneNumber);
         return ResponseEntity.ok(list);
     }
 
-    @PutMapping("/updateOrderStatus/{orderId}/{status}")
+    @PutMapping("/updateOrderStatus/{orderId}/{status}/{sellerId}")
     public ResponseEntity<?> updateOrderStatus(@PathVariable String orderId,
                                                @PathVariable String status,
+                                               @PathVariable String sellerId,
                                                @AuthenticationPrincipal UserDetails userDetails){
-    Boolean bool = sellerService.updateOrderStatus(status,orderId, userDetails.getUsername());
+    Boolean bool = sellerService.updateOrderStatus(status,orderId, sellerId);
     return ResponseEntity.ok(bool);
 
     }

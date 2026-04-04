@@ -24,9 +24,7 @@ public class DeliveryBoyActiveDeliverySellerInfo {
     private String street;
     private String city;
     private String state;
-
     private SellerStatus orderStatus;
-
     private DeliveryBoyStatus deliveryBoyStatus;
 
 }

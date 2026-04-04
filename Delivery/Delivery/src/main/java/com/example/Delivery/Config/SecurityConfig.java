@@ -57,8 +57,9 @@ public class SecurityConfig {
                                 "/deliveryBoy/dashBoard/getProfile",
                                 "/deliveryBoy/order/acceptOrder/{orderId}",
                                 "/deliver/goLiveOrOffline/{status}/{longitude}/{latitude}",
-                                "/deliver/updateOrderStatus/{status}/{orderId}/{sellerPhoneNumber}",
-                                "/deliveryBoy/order/acceptOrder/{orderId}").hasAuthority("DELIVER")
+                                "/deliver/updateOrderStatus/{status}/{orderId}/{sellerId}",
+                                "/deliveryBoy/order/acceptOrder/{orderId}",
+                                "/deliver/markDelivered/{orderId}").hasAuthority("DELIVER")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

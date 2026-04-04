@@ -37,6 +37,22 @@ public interface Seller_daily_revenueRepo extends JpaRepository<Seller_daily_rev
                             @Param("amount") Double amount);
 
 
+    @Query("""
+    SELECT COUNT(s) > 0 FROM Seller_daily_revenue s
+    WHERE s.date = :date AND s.seller.sellerId = :sellerId
+""")
+    boolean existsByDateAndSellerId(LocalDate date, String sellerId);
+
+    @Modifying
+    @Query("""
+    UPDATE Seller_daily_revenue s
+    SET
+        s.revenue = s.revenue + :amount,
+        s.orderCount = s.orderCount + 1,
+        s.averageOrderValue = ((s.revenue * s.orderCount) + :amount) / (s.orderCount + 1)
+    WHERE s.date = :date AND s.seller.sellerId = :sellerId
+""")
+    int updateRevenue(LocalDate date, String sellerId, BigDecimal amount);
         /*
 
     private LocalDate date;
