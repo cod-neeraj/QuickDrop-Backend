@@ -93,8 +93,8 @@ public class OrderService {
                     ids = ids+","+productId;
                 }
 
-//                kafkaTemplate.send("product-add",ids);
-            }else{
+                kafkaTemplate.send("product-add",ids);
+//            }else{
                 mainOrder.setPaymentStatus(PaymentStatus.FAILED);
                 mainOrder.setOrderStatus(OrderStatus.CANCELLED);
                 mainOrderRepo.save(mainOrder);
@@ -126,10 +126,9 @@ public class OrderService {
             list.add(sellerInfo.getSellerId());
             System.out.println(sellerInfo.getSellerId());
             sellerDeliveryDetails.add(sellerDeliveryDetails1);
-            // call function
+
         }
 
-        System.out.println("checkpoint 3 ✅✅");
         List<SellerLocationRepo> list1 = sellerRepo.findLocationsByPhoneNumbers(list);
         int i=0;
         for(SellerDeliveryDetails sellerDeliveryDetails1:sellerDeliveryDetails){
@@ -142,7 +141,6 @@ public class OrderService {
 
         objectMapper = new ObjectMapper();
         String details = objectMapper.writeValueAsString(deliveryBoyOrderDetails);
-        System.out.println("checkpoint 1 ✅✅");
         kafkaTemplate.send("delivery-boy-allocation",details);
 
     }
@@ -198,6 +196,7 @@ public class OrderService {
             }
         }
     }
+
     @KafkaListener(topics = "deliveryBoy-updateOrderStatus",groupId = "order-consume")
     public void deliveryBouOrderStatusChange(String values) throws JsonProcessingException {
         objectMapper = new ObjectMapper();

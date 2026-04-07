@@ -11,6 +11,7 @@ import java.util.Objects;
 @Builder
 public class CartProductDetails {
     private String productId;
+    private String variantId;
     private String name;
     private String type;
     private String brand;

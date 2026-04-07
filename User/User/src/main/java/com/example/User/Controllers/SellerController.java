@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.method.AuthorizeReturnObject;
 import org.springframework.security.core.Authentication;
@@ -41,7 +42,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
+import java.sql.SQLOutput;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -413,6 +417,32 @@ List<Top5orderDetails> list = sellerService.getTop5orders(phoneNumber);
     return ResponseEntity.ok(id);
 
     }
+
+    @GetMapping("/order/stream/{orderId}")
+    public SseEmitter streamOrder(@PathVariable String orderId) {
+        System.out.println("🥳🥳");
+
+        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+
+        sellerService.addEmitter(orderId, emitter);
+
+        emitter.onCompletion(() -> sellerService.removeEmitter(orderId, emitter));
+        emitter.onTimeout(() -> sellerService.removeEmitter(orderId, emitter));
+
+        return emitter;
+    }
+//    @GetMapping(value = "/order/stream/{orderId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+//    public SseEmitter streamOrder(@PathVariable String orderId) throws IOException {
+//
+//        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+//
+//        System.out.println("SSE CONNECTED");
+//
+//        // 🔥 TEST EVENT
+//        emitter.send(SseEmitter.event().name("init").data("HELLO_FROM_SERVER"));
+//
+//        return emitter;
+//    }
 
 
 

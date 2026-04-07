@@ -220,7 +220,12 @@ ORDER BY FUNCTION('YEAR', o.orderDate), FUNCTION('MONTH', o.orderDate)
 
 
 
-
+    @Query("""
+    SELECT MIN(s.orderStatus)
+    FROM com.example.User.Models.OrdersData.SellerInfo s
+    WHERE s.mainOrder.order_id = :orderId
+""")
+    Integer findOrderStatus(@Param("orderId") String orderId);
 }
 
 

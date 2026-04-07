@@ -89,7 +89,8 @@ public class SecurityConfig {
                                 "/customer/getOrders/{phoneNumber}",
                                 "/customer/getOrders/seller/{phoneNumber}",
                                 "/customer/orderDetails/deliveryBoy/{orderId}",
-                                "/ws/**"
+                                "/ws/**",
+                                "/seller/order/stream/{orderId}"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

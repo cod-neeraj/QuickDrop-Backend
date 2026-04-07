@@ -404,8 +404,6 @@ public class CustomerService {
             address="ownPickUp";
 
         }
-
-
         MainOrder mainOrder = MainOrder.builder()
                 .order_id(order_id)
                 .orderStatus(OrderStatus.PROCESSING)
@@ -493,11 +491,6 @@ public class CustomerService {
 
     @Transactional
     public void addProductToCart(AddProductToCart dto, String phoneNumber) {
-
-//        if (dto == null || dto.getQuantity() == null || dto.getQuantity() <= 0) {
-//            throw new IllegalArgumentException("Invalid cart data");
-//        }
-
         Customers user = customerRepo.findByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 

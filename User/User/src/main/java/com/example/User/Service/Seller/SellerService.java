@@ -32,10 +32,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 @Service
@@ -314,8 +317,47 @@ public class SellerService {
         } else{
             status1 = SellerStatus.SHIPPED;
         }
+
         int count = sellerInfoRepo.updateStatus(orderId,phoneNumber,status1);
+        System.out.println(count);
+        Integer in = sellerInfoRepo.findOrderStatus(orderId);
+        String status2 = "";
+        if(in == 1) { status2 = "PROCESSING";}
+        else if (in ==2) { status2 = "ACCEPTED";}
+        else if (in ==3) { status2 = "PACKED";}
+        else { status2 = "SHIPPED";}
+
+
+        System.out.println(in+"❌❌❌❌");
+        notifyOrderUpdate(orderId,status2);
         return count==1;
+    }
+    private Map<String, List<SseEmitter>> emitters = new ConcurrentHashMap<>();
+
+    public void addEmitter(String orderId, SseEmitter emitter) {
+        emitters.computeIfAbsent(orderId, k -> new CopyOnWriteArrayList()).add(emitter);
+    }
+
+    public void removeEmitter(String orderId, SseEmitter emitter) {
+        List<SseEmitter> list = emitters.get(orderId);
+        if (list != null) list.remove(emitter);
+    }
+    public void notifyOrderUpdate(String orderId, String data) {
+
+
+        List<SseEmitter> list = emitters.get(orderId);
+
+        if (list != null) {
+            for (SseEmitter emitter : list) {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .name("order-update")
+                            .data(data));
+                } catch (Exception e) {
+                    emitter.complete();
+                }
+            }
+        }
     }
 
 

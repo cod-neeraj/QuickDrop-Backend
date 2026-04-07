@@ -437,11 +437,14 @@ public List<SellerProductList> getAllProductsForSeller(String phoneNumber,Intege
 
 public int updateQuantity(String productId,Integer quantity){
         int c =0;
+    System.out.println(productId);
+    System.out.println(quantity+"👍👍");
         if(quantity <0){
-            c=productRepo.subtractIfAvailable(productId,quantity*-1);
+            c=productVariantsRepo.subtractIfAvailable(productId,quantity*-1);
         }else{
-           c= productRepo.addProductAgain(productId);
+           c= productVariantsRepo.addProductAgain(productId);
         }
+    System.out.println(c+"❤️❤️");
         return c;
 
 }
