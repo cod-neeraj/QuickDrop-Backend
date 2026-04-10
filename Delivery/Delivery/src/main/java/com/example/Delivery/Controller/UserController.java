@@ -143,10 +143,17 @@ public class UserController {
 
     }
 
-    @PostMapping("markDelivered/{orderId}")
+    @PostMapping("/markDelivered/{orderId}")
     public ResponseEntity<?> deliverTheOrder(@AuthenticationPrincipal UserDetails userDetails,@PathVariable String orderId){
         String phoneNumber = userDetails.getUsername();
         orderService.setDeliveredTheOrder(phoneNumber,orderId);
+        return ResponseEntity.ok("succesfully");
+    }
+
+    @PostMapping("/outForDelivery/{orderId}")
+    public ResponseEntity<?> deliverTheoutOrder(@AuthenticationPrincipal UserDetails userDetails,@PathVariable String orderId){
+        String phoneNumber = userDetails.getUsername();
+        orderService.setOutForDeliveryTheOrder(phoneNumber,orderId);
         return ResponseEntity.ok("succesfully");
     }
 //    @GetMapping("/deliveryBoy/{longitude}/{latitude}")

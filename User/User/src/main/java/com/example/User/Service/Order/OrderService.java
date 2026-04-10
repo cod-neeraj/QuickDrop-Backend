@@ -94,7 +94,7 @@ public class OrderService {
                 }
 
                 kafkaTemplate.send("product-add",ids);
-//            }else{
+            }else{
                 mainOrder.setPaymentStatus(PaymentStatus.FAILED);
                 mainOrder.setOrderStatus(OrderStatus.CANCELLED);
                 mainOrderRepo.save(mainOrder);
@@ -218,6 +218,12 @@ public class OrderService {
     @KafkaListener(topics = "deliveryBoy-delivered-order",groupId = "order-consume")
     public void deliveryChangingOrderStatus(String orderId){
         mainOrderRepo.updateOrderStatus(orderId, OrderStatus.DELIVERED);
+        return;
+
+    }
+    @KafkaListener(topics = "deliveryBoy-outForDelivery-order",groupId = "order-consume")
+    public void deliveryOutChangingOrderStatus(String orderId){
+        mainOrderRepo.updateOrderOutStatus(orderId, OrderStatus.OUT_FOR_DELIVERY);
         return;
 
     }

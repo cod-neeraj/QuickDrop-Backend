@@ -371,11 +371,11 @@ List<Top5orderDetails> list = sellerService.getTop5orders(phoneNumber);
 //    }
 //
 //
-    @GetMapping("/bestSeller/{longitude}/{latitude}")
-    public ResponseEntity<?> findBestSeller(@PathVariable Double longitude,@PathVariable Double latitude){
-        List<BestSellerInfo> list = recommendationService.findBestSeller(longitude,latitude);
-        return ResponseEntity.ok(list);
-    }
+//    @GetMapping("/bestSeller/{longitude}/{latitude}")
+//    public ResponseEntity<?> findBestSeller(@PathVariable Double longitude,@PathVariable Double latitude){
+//        List<BestSellerInfo> list = recommendationService.findBestSeller(longitude,latitude);
+//        return ResponseEntity.ok(list);
+//    }
 //
     @GetMapping("/sellerMiniDetails")
     public ResponseEntity<SellerMiniDetails> sellerMiniDetails(

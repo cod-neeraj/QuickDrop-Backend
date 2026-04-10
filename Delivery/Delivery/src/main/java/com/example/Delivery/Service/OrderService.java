@@ -230,7 +230,7 @@ public class OrderService {
             System.out.println(rankedCandidate.getDeliveryBoyId());
         }
         MiniOrderDetails miniOrderDetails = MiniOrderDetails.builder()
-                .orderEarnings((double) 25.0)
+                .orderEarnings((double) 33.0)
                 .droplocation(deliveryBoyOrderDetails.getDeliveryAddress())
                 .orderId(deliveryBoyOrderDetails.getOrderId())
                 .orderStatus("OPEN")
@@ -256,7 +256,6 @@ public class OrderService {
         for (RankedCandidate c : top20) {
 
             String id = c.getDeliveryBoyId();
-            System.out.println(id+"❤️❤️");
             String json = objectMapper.writeValueAsString(miniOrderDetails);
 
             WebSocketHandler.sendToDeliveryBoy(id, json);
@@ -366,6 +365,10 @@ public class OrderService {
 
     public void setDeliveredTheOrder(String phoneNumber,String orderId){
         kafkaTemplate.send("deliveryBoy-delivered-order",orderId);
+
+    }
+    public void setOutForDeliveryTheOrder(String phoneNumber,String orderId){
+        kafkaTemplate.send("deliveryBoy-outForDelivery-order",orderId);
 
     }
 

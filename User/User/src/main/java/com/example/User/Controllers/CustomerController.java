@@ -16,6 +16,7 @@ import com.example.User.Service.Customer.CustomerService;
 import com.example.User.Service.Order.DeliveryBoyActiveDelivery;
 import com.example.User.Service.Order.DeliveryBoyActiveDeliveryRepoData;
 import com.example.User.Service.Order.OrderService;
+import com.example.User.Service.RecommendationResponse;
 import com.example.User.Service.RecommendationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.razorpay.RazorpayException;
@@ -397,9 +398,11 @@ public ResponseEntity<?> getWishListProducts(@AuthenticationPrincipal UserDetail
 
     }
 
-    @GetMapping("/getRecommendationsList")
-    public ResponseEntity<?> getRecommendationsList(){
-        List<Customer_Visited_product> list = recommendationService.getUserData();
+    @GetMapping("/getRecommendationsList/{userId}/{longitude}/{latitude}")
+    public ResponseEntity<?> getRecommendationsList(@PathVariable String userId,
+                                                    @PathVariable Double longitude,
+                                                    @PathVariable Double latitude){
+        RecommendationResponse list = recommendationService.getBestRecommendations(userId,longitude,latitude);
         return ResponseEntity.ok(list);
 
 

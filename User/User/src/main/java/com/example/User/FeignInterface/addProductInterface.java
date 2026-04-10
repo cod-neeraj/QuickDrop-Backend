@@ -3,6 +3,7 @@ package com.example.User.FeignInterface;
 import com.example.User.DataToShow.ProductCreateDto.ProductDTO;
 import com.example.User.Service.Seller.SellerProductList;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,5 +24,8 @@ public interface addProductInterface {
 
     @GetMapping("/product-shopkeeper/sellerProductCount/{phoneNumber}")
     public ResponseEntity<Long> getProductCount(@PathVariable String phoneNumber);
+
+    @PostMapping("/product/getBestProducts")
+    public ResponseEntity<List<BestProductInfo>> findBestProducts(@RequestBody @Valid BestProductDTO bestProductDTO);
 }
 

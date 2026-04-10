@@ -554,6 +554,15 @@ public Long getProductCount(String phoneNumber){
         return result;
     }
 
+    public List<BestProductInfo> findBestProducts(List<String> geohashes){
+        System.out.println("👍👍 part-01");
+        Pageable pageable = PageRequest.of(0, 50);
+        System.out.println("👍👍 part-02");
+        List<BestProductInfo> list =  productStatsRepo.findBestProducts(geohashes,pageable);
+        System.out.println("👍👍 part-03");
+        return list;
+    }
+
 
 
 }

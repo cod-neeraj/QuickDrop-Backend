@@ -3,7 +3,9 @@ package com.example.Product.Repository;
 import com.example.Product.DTO.LowStockDTO;
 import com.example.Product.DTO.RecommendedProductCard;
 import com.example.Product.Model.ProductData.Product;
+import com.example.Product.Model.ProductData.ProductCategory;
 import com.example.Product.Model.ProductSearchAbleObject;
+//import ;
 import com.example.Product.Service.SellerProductList;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -158,10 +160,9 @@ public interface ProductRepo extends JpaRepository<Product,String> {
              WHERE p.phoneNumber = :phoneNumber AND pv.quantity<15
             """)
     List<LowStockDTO> findLowStockProduct(@Param("phoneNumber") String phoneNumber);
+
+
 }
-
-
-
 
 
 

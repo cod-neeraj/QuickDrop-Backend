@@ -1,0 +1,92 @@
+name: User Service CI/CD
+
+on:
+push:
+paths:
+- 'Delivery/**' 
+
+env:
+AWS_REGION: ap-south-1
+ECR_REPOSITORY: 088253294231.dkr.ecr.ap-south-1.amazonaws.com/
+IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+build-test-scan-deploy:
+runs-on: ubuntu-latest
+
+```
+steps:
+  - name: Checkout code
+    uses: actions/checkout@v3
+
+ 
+  - name: Set up JDK 17
+    uses: actions/setup-java@v3
+    with:
+      distribution: 'temurin'
+      java-version: '17'
+
+  - name: Build with Maven
+    run: mvn -B clean package -DskipTests=false
+    working-directory: /User
+
+  - name: Run Tests
+    run: mvn test
+    working-directory: Delivery
+
+  - name: Trivy Filesystem Scan
+    uses: aquasecurity/trivy-action@0.20.0
+    with:
+      scan-type: 'fs'
+      scan-ref: 'User'
+      format: 'table'
+      exit-code: '1'
+      severity: 'CRITICAL,HIGH'
+
+  
+  - name: Configure AWS Credentials
+    uses: aws-actions/configure-aws-credentials@v2
+    with:
+      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      aws-region: ${{ env.AWS_REGION }}
+
+  - name: Login to Amazon ECR
+    uses: aws-actions/amazon-ecr-login@v1
+
+
+  - name: Build Docker Image
+    run: |
+      docker build -t $ECR_REPOSITORY:$IMAGE_TAG ./micromartackend/delivery
+
+  # 🔹 Trivy Image Scan
+  - name: Trivy Image Scan
+    uses: aquasecurity/trivy-action@0.20.0
+    with:
+      image-ref: '${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}'
+      format: 'table'
+      exit-code: '1'
+      severity: 'CRITICAL,HIGH'
+
+  # 🔹 Tag Image
+  - name: Tag Image
+    run: |
+      docker tag $ECR_REPOSITORY:$IMAGE_TAG \
+      ${{ secrets.ECR_URI }}/$ECR_REPOSITORY:$IMAGE_TAG
+
+  # 🔹 Push to ECR
+  - name: Push to ECR
+    run: |
+      docker push ${{ secrets.ECR_URI }}/$ECR_REPOSITORY:$IMAGE_TAG
+
+  # 🔹 Update Kubeconfig
+  - name: Update kubeconfig
+    run: |
+      aws eks update-kubeconfig --region $AWS_REGION --name <CLUSTER_NAME>
+
+  # 🔹 Deploy to Kubernetes
+  - name: Deploy to Kubernetes
+    run: |
+      kubectl set image deployment/user-service \
+      user-service=${{ secrets.ECR_URI }}/$ECR_REPOSITORY:$IMAGE_TAG
+

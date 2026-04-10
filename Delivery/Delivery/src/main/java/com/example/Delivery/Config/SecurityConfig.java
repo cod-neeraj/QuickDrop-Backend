@@ -59,7 +59,8 @@ public class SecurityConfig {
                                 "/deliver/goLiveOrOffline/{status}/{longitude}/{latitude}",
                                 "/deliver/updateOrderStatus/{status}/{orderId}/{sellerId}",
                                 "/deliveryBoy/order/acceptOrder/{orderId}",
-                                "/deliver/markDelivered/{orderId}").hasAuthority("DELIVER")
+                                "/deliver/markDelivered/{orderId}",
+                                "/deliver/outForDelivery/{orderId}").hasAuthority("DELIVER")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

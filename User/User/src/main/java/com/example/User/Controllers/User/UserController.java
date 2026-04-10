@@ -212,5 +212,10 @@ else{
 
     }
 
+    @GetMapping("/getTopSellerAndProducts")
+    public ResponseEntity<?> fetchBest(){
+        return ResponseEntity.ok("");
+    }
+
 
 }

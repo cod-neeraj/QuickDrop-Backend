@@ -1,30 +1,22 @@
 package com.example.User.Service;
 
-import lombok.*;
 
-import java.util.Set;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class BestSellerInfo {
 
     private String sellerId;
     private String name;
+    private String phoneNumber;
     private String thumbnailImage;
     private String shopName;
+    private String timings;
     private String street;
     private String city;
-
-    public BestSellerInfo(String sellerId,String name,String thumbnailImage,String shopName,String street,
-                          String city
-    ) {
-        this.sellerId = sellerId;
-        this.name = name;
-        this.thumbnailImage = thumbnailImage;
-        this.shopName = shopName;
-        this.street = street;
-        this.city = city;
-    }
+    private String state;
 }

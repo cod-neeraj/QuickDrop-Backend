@@ -2,6 +2,10 @@ package com.example.User.Repository.SellerRepositories;
 
 import com.example.User.Models.Seller.SellerStats;
 import com.example.User.Service.BestSellerInfo;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,21 +20,26 @@ public interface Seller_Stat_Repo extends JpaRepository<SellerStats,String> {
 
     @Query("""
     SELECT new com.example.User.Service.BestSellerInfo(
-        s.sellerId,
-        s.name,
-        s.thumbnailImage,
-        s.shopName,
-        s.street,
-        s.city
+        p.sellerId,
+        p.name,
+        p.phoneNumber,
+        p.thumbnailImage,
+        p.shopName,
+        p.timings,
+        p.street,
+        p.city,
+        p.state
     )
-    FROM SellerInfo s
-    JOIN s.sellerStats p
-    WHERE s.geohash IN :geohashes
-    ORDER BY p.score DESC
+    FROM SellerStats s
+    JOIN s.seller p
+    WHERE s.geoHash IN :geohashes
+    ORDER BY s.score DESC
+    LIMIT 50
 """)
     List<BestSellerInfo> findBestSeller(
             @Param("geohashes") List<String> geohashes
     );
+
 
 
 }

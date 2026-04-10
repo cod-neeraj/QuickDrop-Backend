@@ -18,4 +18,8 @@ public interface CustomerRepo  extends JpaRepository<Customers,Long> {
     @Query("SELECT c.name FROM Customers c WHERE c.phoneNumber =:phoneNumber")
     String findByPhone(@Param("phoneNumber") String phoneNumber);
 
+
+    @Query("SELECT c.userId FROM Customers c WHERE c.phoneNumber =:phoneNumber")
+    String findByPhoneUserId(@Param("phoneNumber") String phoneNumber);
+
 }

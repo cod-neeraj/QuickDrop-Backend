@@ -78,7 +78,6 @@ public class SecurityConfig {
                                 "/seller/bestSeller/{longitude}/{latitude}",
                                 "/user/login",
                                 "/customer/addtomongodb",
-                                "/customer/getRecommendationsList",
                                 "/user/getProduct",
                                 "/user/seller/authcheck",
                                 "/user/addProductToRedisOrder",
@@ -90,7 +89,8 @@ public class SecurityConfig {
                                 "/customer/getOrders/seller/{phoneNumber}",
                                 "/customer/orderDetails/deliveryBoy/{orderId}",
                                 "/ws/**",
-                                "/seller/order/stream/{orderId}"
+                                "/seller/order/stream/{orderId}",
+                                "/customer/getRecommendationsList/{userId}/{longitude}/{latitude}"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

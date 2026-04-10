@@ -82,6 +82,17 @@ public interface MainOrderRepo extends JpaRepository<MainOrder,String> {
     int updateOrderStatus(@Param("orderId") String orderId,
                                 @Param("status") OrderStatus status);
 
+    @Transactional
+    @Modifying
+    @Query("""
+  UPDATE MainOrder m
+  SET m.orderStatus = :status
+  WHERE m.order_id = :orderId
+""")
+    int updateOrderOutStatus(@Param("orderId") String orderId,
+                          @Param("status") OrderStatus status);
+
+
 
 
 

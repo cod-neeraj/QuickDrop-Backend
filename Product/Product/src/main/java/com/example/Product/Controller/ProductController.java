@@ -8,15 +8,18 @@ import com.example.Product.Model.ProductSearchAbleObject;
 import com.example.Product.Model.ProductSearchReturnModel;
 import com.example.Product.Model.RecommendationDataDTO;
 import com.example.Product.Response.ApiResponse;
+import com.example.Product.Service.BestProductInfo;
 import com.example.Product.Service.ProductService;
 import com.example.Product.Service.RecommendationsService;
 import com.example.Product.Service.SellerProductList;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Path;
 import jakarta.xml.bind.annotation.DomHandler;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -187,6 +190,14 @@ public ResponseEntity<ApiResponse<String>> addProduct(
         }
         return ResponseEntity.ok(list);
 
+    }
+
+    @PostMapping("/getBestProducts")
+    public ResponseEntity<List<BestProductInfo>> findBestProducts(@RequestBody @Valid BestProductDTO bestProductDTO){
+        List<String> hashes = bestProductDTO.getGeohashes();
+        List<BestProductInfo> list = productService.findBestProducts(hashes);
+        System.out.println("👍👍 part-04");
+        return ResponseEntity.ok(list);
     }
 
 

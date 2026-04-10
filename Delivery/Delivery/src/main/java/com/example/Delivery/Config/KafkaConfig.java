@@ -62,4 +62,13 @@ public class KafkaConfig {
                 .replicas(1)
                 .build();
     }
+
+    @Bean
+    public NewTopic outForDelivery(){
+        return TopicBuilder
+                .name("deliveryBoy-outForDelivery-order")
+                .partitions(4)
+                .replicas(1)
+                .build();
+    }
 }
